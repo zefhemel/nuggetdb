@@ -2,7 +2,10 @@ import uuid
 import nuggetdb.shard
 
 class Entity(object):
-    def __init__(self, id=None, content={}, updated=None, new=True):
+    id = None
+    updated = None
+
+    def __init__(self, id=None, updated=None, new=True, **content):
         self.id = id
         for k, v in content.items():
             setattr(self, k, v)
@@ -36,4 +39,23 @@ class Entity(object):
     def all(cls):
         for s in nuggetdb.shard.shards.values():
             for e in s.all():
+                yield e
+
+class Model(Entity):
+
+    def prefix(self):
+        return self.__class__.__name__ + '/'
+
+    def generate_id(self):
+        return self.prefix() + Entity.generate_id(self)
+    
+    def put(self, shard=None):
+        if self.id and not self.id.startswith(self.prefix()):
+            self.id = self.prefix() + self.id
+        Entity.put(self, shard)
+
+    @classmethod
+    def all(cls):
+        for s in nuggetdb.shard.shards.values():
+            for e in s.all_with_id(cls.__name__ + '/%'):
                 yield e

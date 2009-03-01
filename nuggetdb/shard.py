@@ -14,6 +14,13 @@ def random_pick():
     rnd = random.randint(0, len(options) - 1)
     return options[rnd]
 
+def type_pick():
+    """Picks a shard at random."""
+    import random
+    options = list(shards.values())
+    rnd = random.randint(0, len(options) - 1)
+    return options[rnd]
+
 class Shard(object):
     name = None
     connection = None
@@ -45,7 +52,13 @@ class Shard(object):
         c = self.get_connection().cursor()
         c.execute('SELECT * FROM ' + self.table_prefix + 'entity')
         for (id, updated, content) in c:
-            yield Entity(id, pickle.loads(content), updated, new=False)
+            yield Entity(id, updated=updated, new=False, **pickle.loads(content))
+
+    def all_with_id(self, id):
+        c = self.get_connection().cursor()
+        c.execute('SELECT * FROM ' + self.table_prefix + 'entity WHERE id LIKE %s', id)
+        for (id, updated, content) in c:
+            yield Entity(id, updated=updated, new=False, **pickle.loads(content))
 
     def create(self):
         conn = self.get_connection()
@@ -55,7 +68,7 @@ class Shard(object):
             c = conn.cursor()
             c.execute('''CREATE TABLE ''' + self.table_prefix + '''entity (
                           `id` varchar(200) NOT NULL,
-                          `updated` datetime default NULL,
+                          `updated` timestamp default NOW(),
                           `content` mediumblob,
                           PRIMARY KEY  (`id`)
                         ) ENGINE=InnoDB DEFAULT CHARSET=latin1''')
