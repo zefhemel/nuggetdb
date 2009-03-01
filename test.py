@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 
 import MySQLdb
-import db
+import nuggetdb.shard
+from nuggetdb.entity import *
 
-shard1 = db.Shard('main', MySQLdb, 'root', '', 'nuggetdb')
-db.register_shard(shard1)
+shard1 = nuggetdb.shard.Shard('main', MySQLdb, 'root', '', 'nuggetdb')
+nuggetdb.shard.register(shard1)
 
-zef = db.Entity()
+zef = Entity()
 zef.firstName = 'Zef'
 zef.lastName = 'Hemel'
 zef.age = 25
 zef.put(shard1)
 
-for e in db.Entity.all():
+for e in Entity.all():
     print e.id
