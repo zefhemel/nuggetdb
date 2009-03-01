@@ -1,3 +1,5 @@
+import uuid
+import nuggetdb.shard
 
 class Entity(object):
     def __init__(self, id=None, content={}, updated=None, new=True):
@@ -20,15 +22,18 @@ class Entity(object):
             d[p] = getattr(self, p)
         return d
 
+    def generate_id(self):
+        return str(uuid.uuid4())
+
     def put(self, shard=None):
         if shard:
             self.__shard = shard
         if not self.id:
-            self.id = str(uuid.uuid4())
+            self.id = self.generate_id()
         self.__shard.put(self)
 
     @classmethod
     def all(cls):
-        for s in shards.values():
+        for s in nuggetdb.shard.shards.values():
             for e in s.all():
                 yield e
