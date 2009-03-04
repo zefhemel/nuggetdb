@@ -1,22 +1,28 @@
 import uuid
 import nuggetdb.shard
 
+class IllegalIdException(Exception):
+    pass
+
 class Entity(object):
     id = None
     updated = None
+    ns = ''
+    _new = True
 
-    def __init__(self, id=None, updated=None, new=True, **content):
+    def __init__(self, ns='', id=None, updated=None, new=True, **content):
         self.id = id
         for k, v in content.items():
             setattr(self, k, v)
         self.updated = updated
+        self.ns = ns
         self._shard = None
         self._new = new
 
     def as_dict(self):
         d = {}
         for p in dir(self):
-            if p in ['id', 'updated']:
+            if p in ['id', 'updated', 'ns']:
                 continue
             if p.startswith('_'):
                 continue
@@ -28,11 +34,17 @@ class Entity(object):
     def generate_id(self):
         return str(uuid.uuid4())
 
+    def validate(self):
+        # Check id characters
+        if '/' in self.id:
+            raise IllegalIdException("The following characters are not allowed in ids: /")
+
     def put(self, shard=None):
-        if shard:
-            self.__shard = shard
         if not self.id:
             self.id = self.generate_id()
+        if shard:
+            self.__shard = shard
+        self.validate()
         self.__shard.put(self)
 
     @classmethod
@@ -41,21 +53,8 @@ class Entity(object):
             for e in s.all():
                 yield e
 
-class Model(Entity):
-
-    def prefix(self):
-        return self.__class__.__name__ + '/'
-
-    def generate_id(self):
-        return self.prefix() + Entity.generate_id(self)
-    
-    def put(self, shard=None):
-        if self.id and not self.id.startswith(self.prefix()):
-            self.id = self.prefix() + self.id
-        Entity.put(self, shard)
-
     @classmethod
-    def all(cls):
+    def all_in_ns(cls, ns):
         for s in nuggetdb.shard.shards.values():
-            for e in s.all_with_id(cls.__name__ + '/%'):
+            for e in s.all_in_ns(ns):
                 yield e

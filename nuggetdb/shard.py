@@ -14,13 +14,6 @@ def random_pick():
     rnd = random.randint(0, len(options) - 1)
     return options[rnd]
 
-def type_pick():
-    """Picks a shard at random."""
-    import random
-    options = list(shards.values())
-    rnd = random.randint(0, len(options) - 1)
-    return options[rnd]
-
 class Shard(object):
     name = None
     connection = None
@@ -38,27 +31,38 @@ class Shard(object):
             self.connection = self.driver.connect(user=self.user, passwd=self.passwd, db=self.db)
         return self.connection
 
+    def _db_id(self, entity):
+        return entity.ns + '/' + entity.id
+
+    def _extract_ns_id(self, db_id):
+        parts = db_id.split('/')
+        return ('/'.join(parts[0:-1]), parts[-1])
+
     def put(self, entity):
         conn = self.get_connection()
         c = conn.cursor()
         if entity._new:
-            c.execute('INSERT INTO ' + self.table_prefix + 'entity VALUES (%s, NOW(), %s)', (entity.id, pickle.dumps(entity.as_dict())))
+            c.execute('INSERT INTO ' + self.table_prefix + 'entity VALUES (%s, NOW(), %s)', (self._db_id(entity), pickle.dumps(entity.as_dict())))
             entity._new = False
         else:
-            c.execute('UPDATE ' + self.table_prefix + 'entity SET updated = NOW(), content = %s WHERE id = %s;', (pickle.dumps(entity.as_dict()), entity.id))
+            c.execute('UPDATE ' + self.table_prefix + 'entity SET updated = NOW(), content = %s WHERE id = %s;', (pickle.dumps(entity.as_dict()), self._db_id(entity)))
         conn.commit()
+
+    def _entity_from_db_row(self, row):
+        (ns, id) = self._extract_ns_id(row[0])
+        return Entity(ns=ns, id=id, updated=row[1], new=False, **pickle.loads(row[2]))
 
     def all(self):
         c = self.get_connection().cursor()
         c.execute('SELECT * FROM ' + self.table_prefix + 'entity')
-        for (id, updated, content) in c:
-            yield Entity(id, updated=updated, new=False, **pickle.loads(content))
+        for row in c:
+            yield self._entity_from_db_row(row)
 
-    def all_with_id(self, id):
+    def all_in_ns(self, ns):
         c = self.get_connection().cursor()
-        c.execute('SELECT * FROM ' + self.table_prefix + 'entity WHERE id LIKE %s', id)
-        for (id, updated, content) in c:
-            yield Entity(id, updated=updated, new=False, **pickle.loads(content))
+        c.execute('SELECT * FROM ' + self.table_prefix + 'entity WHERE id LIKE %s', ns + '/%')
+        for row in c:
+            yield self._entity_from_db_row(row)
 
     def create(self):
         conn = self.get_connection()
