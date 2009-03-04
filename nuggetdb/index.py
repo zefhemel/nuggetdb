@@ -1,4 +1,5 @@
 from nuggetdb.entity import Entity
+from nuggetdb.shard import shards
 import re
 
 py_type_to_sql_type = {
@@ -42,6 +43,7 @@ class Index(object):
                         entity_id VARCHAR(200) NOT NULL UNIQUE,
                         %s,
                         updated TIMESTAMP NOT NULL DEFAULT NOW(),
+                        shard VARCHAR(20) NOT NULL,
                         PRIMARY KEY (%s, entity_id)
                      ) ENGINE=InnoDB;''' % (self._table_name(), ','.join(column_defs), ', '.join(self.columns))
             c = conn.cursor()
@@ -52,15 +54,28 @@ class Index(object):
         c = conn.cursor()
         vals = []
         for col in self.columns:
-            vals.append('\'' + conn.escape_string(getattr(entity, col)) + '\'')
-        c.execute('INSERT INTO %s (entity_id, %s) VALUES (\'%s\', %s);' % (self._table_name(), ', '.join(self.columns), conn.escape_string(entity.id),  ', '.join(vals)))
+            vals.append('\'' + conn.escape_string(str(getattr(entity, col))) + '\'')
+        c.execute('INSERT INTO %s (entity_id, shard, %s) VALUES (\'%s\', \'%s\', %s);' % 
+                (self._table_name(), ', '.join(self.columns), conn.escape_string(entity._shard._db_id(entity)),  entity._shard.name, ', '.join(vals)))
         conn.commit()
 
     def has_entry(self, entity):
         conn = self.shard.get_connection()
         c = conn.cursor()
-        c.execute('SELECT entity_id FROM ' + self._table_name() + ' WHERE entity_id = %s LIMIT 1', entity.id)
+        c.execute('SELECT entity_id FROM ' + self._table_name() + ' WHERE entity_id = %s LIMIT 1', entity._shard._db_id(entity))
         return len(list(c)) == 1
+
+    def lookup(self, **values):
+        conn = self.shard.get_connection()
+        wheres = []
+        for (c, v) in values.items():
+            if not c in self.columns:
+                raise Exception("This index is not capable of looking up column %s" % c)
+            wheres.append('%s = \'%s\'' % (c, conn.escape_string(str(v))))
+        c = conn.cursor()
+        c.execute('SELECT entity_id, shard FROM %s WHERE %s;' % (self._table_name(), ' AND '.join(wheres)))
+        for (id, shard_id) in c:
+            yield Entity.get(id, shards[shard_id])
 
     def update(self):
         for e in Entity.all_in_ns(self.ns, order_by_date='desc'):

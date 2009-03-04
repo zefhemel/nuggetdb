@@ -10,13 +10,13 @@ class Entity(object):
     ns = None
     _new = True
 
-    def __init__(self, ns='', id=None, updated=None, new=True, **content):
+    def __init__(self, ns='', id=None, updated=None, shard=None, new=True, **content):
         self.id = id
         for k, v in content.items():
             setattr(self, k, v)
         self.updated = updated
         self.ns = ns
-        self._shard = None
+        self._shard = shard
         self._new = new
 
     def as_dict(self):
@@ -46,6 +46,10 @@ class Entity(object):
             self.__shard = shard
         self.validate()
         self.__shard.put(self)
+
+    @classmethod
+    def get(cls, db_id, shard):
+        return shard.get(db_id)
 
     @classmethod
     def all(cls):

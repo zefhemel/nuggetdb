@@ -14,6 +14,9 @@ def random_pick():
     rnd = random.randint(0, len(options) - 1)
     return options[rnd]
 
+class EntityNotFoundException(Exception):
+    pass
+
 class Shard(object):
     name = None
     connection = None
@@ -54,9 +57,19 @@ class Shard(object):
             c.execute('UPDATE ' + self.table_prefix + 'entity SET updated = NOW(), content = %s WHERE id = %s;', (pickle.dumps(entity.as_dict()), self._db_id(entity)))
         conn.commit()
 
+    def get(self, db_id):
+        conn = self.get_connection()
+        c = conn.cursor()
+        c.execute('SELECT * FROM ' + self.table_prefix + 'entity WHERE id = %s LIMIT 1;', db_id)
+        results = c.fetchall()
+        if len(results) == 1:
+            return self._entity_from_db_row(results[0])
+        else:
+            raise EntityNotFoundException("Could not find entity with id %s in shard %s" % (id, self.name))
+
     def _entity_from_db_row(self, row):
         (ns, id) = self._extract_ns_id(row[0])
-        return Entity(ns=ns, id=id, updated=row[1], new=False, **pickle.loads(row[2]))
+        return Entity(ns=ns, id=id, updated=row[1], new=False, shard=self, **pickle.loads(row[2]))
 
     def all(self):
         c = self.get_connection().cursor()
