@@ -7,7 +7,7 @@ class IllegalIdException(Exception):
 class Entity(object):
     id = None
     updated = None
-    ns = ''
+    ns = None
     _new = True
 
     def __init__(self, ns='', id=None, updated=None, new=True, **content):
@@ -54,7 +54,7 @@ class Entity(object):
                 yield e
 
     @classmethod
-    def all_in_ns(cls, ns):
+    def all_in_ns(cls, ns, order_by_date=None):
         for s in nuggetdb.shard.shards.values():
-            for e in s.all_in_ns(ns):
+            for e in s.all_in_ns(ns, order_by_date):
                 yield e

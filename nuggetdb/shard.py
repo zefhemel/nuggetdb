@@ -32,11 +32,17 @@ class Shard(object):
         return self.connection
 
     def _db_id(self, entity):
-        return entity.ns + '/' + entity.id
+        if entity.ns:
+            return entity.ns + '/' + entity.id
+        else:
+            return entity.id
 
     def _extract_ns_id(self, db_id):
         parts = db_id.split('/')
-        return ('/'.join(parts[0:-1]), parts[-1])
+        if len(parts) == 1: # No namepsace
+            return (None, db_id)
+        else:
+            return ('/'.join(parts[0:-1]), parts[-1])
 
     def put(self, entity):
         conn = self.get_connection()
@@ -58,9 +64,16 @@ class Shard(object):
         for row in c:
             yield self._entity_from_db_row(row)
 
-    def all_in_ns(self, ns):
+    def all_in_ns(self, ns, order_by_date=None):
         c = self.get_connection().cursor()
-        c.execute('SELECT * FROM ' + self.table_prefix + 'entity WHERE id LIKE %s', ns + '/%')
+        if order_by_date:
+            order_by = 'ORDER BY updated %s' % order_by_date
+        else:
+            order_by = ''
+        if ns:
+            c.execute('SELECT * FROM ' + self.table_prefix + 'entity WHERE id LIKE %s ' + order_by, ns + '/%')
+        else:
+            c.execute('SELECT * FROM ' + self.table_prefix + 'entity' + order_by)
         for row in c:
             yield self._entity_from_db_row(row)
 
