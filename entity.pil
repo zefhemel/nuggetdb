@@ -1,0 +1,49 @@
+
+class nuggetdb::IllegalIdException extends Exception {
+  new(String message) extends super(message) {
+  }
+}
+
+class nuggetdb::Entity {
+  String id = null;
+  String ns = null;
+  DateTime updated = new DateTime();
+  Bool isNew = true;
+
+  @private Map<String, Object> attributes = new Map<String, Object>();
+
+  new() {
+  }
+
+  void set(String attr, Object value) {
+    attributes[attr] = value;
+  }
+
+  Object get(String attr) {
+    return attributes[attr];
+  }
+
+  void setInt(String attr, Int value) {
+    attributes[attr] = value;
+  }
+
+  Int getInt(String attr) {
+    return (Int)attributes[attr];
+  }
+
+  void setString(String attr, String value) {
+    attributes[attr] = value;
+  }
+
+  String getString(String attr) {
+    return (attributes[attr]).toString();
+  }
+
+  void setDateTime(String attr, DateTime value) {
+    attributes[attr] = value;
+  }
+
+  DateTime getDateTime(String attr) {
+    return (DateTime)attributes[attr];
+  }
+}
