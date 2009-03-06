@@ -1,5 +1,7 @@
 import "db.pil"
-import nuggetdb::db
+import "json.pil"
+import pil::db
+import pil::json
 
 void main(Array<String> args) {
     var db = new Database("localhost", "root", "", "nuggetdb");
@@ -8,4 +10,11 @@ void main(Array<String> args) {
     for(Result r : results) {
         println(r.getString(0));
     }
+    var o = new JsonObject();
+    o.setString("name", "Zef Hemel");
+    o.setInt("age", 25);
+    //var o2 = pil::json::fromJsonString(o.toJson());
+    o = fromJsonString(o.toJson());
+    println(o.getString("name"));
+    println(o.getInt("age"));
 }

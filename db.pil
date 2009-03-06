@@ -1,15 +1,15 @@
-import nuggetdb::db
+import pil::db
 
-external class nuggetdb::db::Database {
+external class pil::db::Database {
     new(String hostName, String username, String password, String database);
-    nuggetdb::db::Connection getConnection();
+    pil::db::Connection getConnection();
 }
 
-external class nuggetdb::db::Connection {
+external class pil::db::Connection {
     List<Result> query(String query);
 }
 
-external class nuggetdb::db::Result {
+external class pil::db::Result {
     Int getInt(Int index);
     String getString(Int index);
 }

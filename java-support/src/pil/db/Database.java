@@ -1,4 +1,4 @@
-package nuggetdb.db;
+package pil.db;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
