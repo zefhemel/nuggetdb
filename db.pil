@@ -1,0 +1,15 @@
+import nuggetdb::db
+
+external class nuggetdb::db::Database {
+    new(String hostName, String username, String password, String database);
+    nuggetdb::db::Connection getConnection();
+}
+
+external class nuggetdb::db::Connection {
+    List<Result> query(String query);
+}
+
+external class nuggetdb::db::Result {
+    Int getInt(Int index);
+    String getString(Int index);
+}

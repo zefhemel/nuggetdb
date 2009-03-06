@@ -1,0 +1,11 @@
+import "db.pil"
+import nuggetdb::db
+
+void main(Array<String> args) {
+    var db = new Database("localhost", "root", "", "nuggetdb");
+    var conn = db.getConnection();
+    var results = conn.query("SHOW TABLES");
+    for(Result r : results) {
+        println(r.getString(0));
+    }
+}

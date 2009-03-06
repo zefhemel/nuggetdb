@@ -1,0 +1,34 @@
+<project name="nuggetdb" default="compile">
+
+	<property name="pildir" value="/Users/zef/svn/pil"/>
+    <property name="sourcedir" value="src"/>
+    <property name="targetdir" value="bin"/>
+    <property name="librarydir" value="lib"/>
+
+    <path id="libraries">
+        <fileset dir="${librarydir}">
+            <include name="*.jar"/>
+        </fileset>
+    	<fileset dir="${pildir}/src/lib">
+            <include name="pil.jar"/>
+    	</fileset>
+    </path>
+
+    <target name="clean">
+        <delete dir="${targetdir}"/>
+        <mkdir dir="${targetdir}"/>
+    </target>
+
+    <target name="compile">
+      <javac srcdir="${sourcedir}"
+             destdir="${targetdir}"
+             classpathref="libraries"
+             debug="on"/>            
+    </target>
+	
+	<target name="run">
+	      <java classname="Main"
+	      	    classpath="${targetdir}"
+	             classpathref="libraries"/>            
+	    </target>
+</project>
