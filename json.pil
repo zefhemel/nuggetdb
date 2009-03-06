@@ -1,11 +1,16 @@
 external class pil::json::JsonObject {
-    new();
-    void setString(String key, String value);
-    void setInt(String key, Int value);
-    String getString(String key);
-    Int getInt(String key);
+  new();
+  void setString(String key, String value);
+  void setInt(String key, Int value);
+  void setDateTime(String key, DateTime value);
+  String getString(String key);
+  Int getInt(String key);
+  DateTime getDateTime(String key);
+  Int getInt(String key);
+  Object get(String key);
+  void set(String key, Object value);
 
-    String toJson();
+  String toJson();
 }
 
 external pil::json::JsonObject pil::json::fromJsonString(String jsonString);

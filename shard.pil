@@ -1,0 +1,70 @@
+import "db.pil"
+import "entity.pil"
+import "util.pil"
+
+import nuggetdb
+import nuggetdb::shard
+import nuggetdb::util
+
+class nuggetdb::shard::Shard {
+  String name = "default";
+  String tablePrefix = "default";
+  pil::db::Connection conn = null;
+
+  new(String name, pil::db::Connection conn, String tablePrefix) {
+    this.name = name;
+    this.conn = conn;
+    this.tablePrefix = tablePrefix;
+  }
+
+  String dbId(Entity entity) {
+    if(entity.ns == null) {
+      return entity.id;
+    } else {
+      return entity.ns + "/" + entity.id;
+    }
+  }
+
+  String extractNs(String dbId) {
+    var parts = dbId.split("/");
+    if(parts.length == 1) {
+      return null;
+    } else {
+      return joinStrings("/", subStringArray(parts, 0, parts.length-2));
+    }
+  }
+
+  String extractId(String dbId) {
+    var parts = dbId.split("/");
+    return parts[parts.length-1];
+  }
+
+  void put(Entity e) {
+    if(e.isNew) {
+      var sql = "INSERT INTO " + tablePrefix + "entity VALUES ('" + sqlEscape(e.id) + "', NOW(), '" + sqlEscape(e.toJson()) + "');";
+      println(sql);
+      conn.updateQuery(sql);
+      e.isNew = false;
+    } else {
+      var sql = "UPDATE " + tablePrefix + "entity SET updated = NOW(), content = '" + sqlEscape(e.toJson()) + "' WHERE id = '" + sqlEscape(e.id) + "';";
+      println(sql);
+      conn.updateQuery(sql);
+    }
+  }
+
+  void create() {
+    for(pil::db::Result r : conn.query("SHOW TABLES;")) {
+      if(r.getString(0) == tablePrefix + "entity") {
+        return;
+      }
+    }
+    // Table does not yet exist
+    var sql = "CREATE TABLE " + tablePrefix + "entity (";
+    sql = sql + "   id      VARCHAR(200) NOT NULL,";
+    sql = sql + "   updated TIMESTAMP DEFAULT NOW(),";
+    sql = sql + "   content MEDIUMTEXT,";
+    sql = sql + "   PRIMARY KEY  (`id`)";
+    sql = sql + ") ENGINE=InnoDB;";
+    conn.updateQuery(sql);
+  }
+}

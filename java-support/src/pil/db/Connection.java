@@ -24,4 +24,12 @@ public class Connection {
 			throw new RuntimeException(e);
 		}
 	}
+	public void updateQuery(String sql) {
+		try {
+			Statement stmt = conn.createStatement();
+			stmt.executeUpdate(sql);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

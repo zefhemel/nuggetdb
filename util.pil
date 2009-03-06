@@ -1,0 +1,30 @@
+String nuggetdb::util::joinStrings(String separator, Array<String> parts) {
+  var r = new MutableString();
+  for(Int i = 0; i < parts.length; i++) {
+    r.append(parts[i]);
+    if(i < parts.length-1) {
+      r.append(separator);
+    }
+  }
+  return r.toString();
+}
+
+Array<String> nuggetdb::util::subStringArray(Array<String> array, Int startIndex, Int endIndex) {
+  var newAr = new Array<String>(endIndex-startIndex+1);
+  for(Int i = startIndex; i <= endIndex; i++) {
+    newAr[i-startIndex] = array[i];
+  }
+  return newAr;
+}
+
+String nuggetdb::util::sqlEscape(String value) {
+  var r = new MutableString();
+  for(Int i = 0; i < value.length; i++) {
+    if(value[i] == '\'') {
+      r.append("\\'");
+    } else {
+      r.append(value[i]);
+    }
+  }
+  return r.toString();
+}

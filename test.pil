@@ -1,20 +1,29 @@
 import "db.pil"
-import "json.pil"
+import "entity.pil"
+import "shard.pil"
 import pil::db
-import pil::json
+import nuggetdb
+import nuggetdb::shard
 
 void main(Array<String> args) {
-    var db = new Database("localhost", "root", "", "nuggetdb");
-    var conn = db.getConnection();
-    var results = conn.query("SHOW TABLES");
-    for(Result r : results) {
-        println(r.getString(0));
-    }
-    var o = new JsonObject();
-    o.setString("name", "Zef Hemel");
-    o.setInt("age", 25);
-    //var o2 = pil::json::fromJsonString(o.toJson());
-    o = fromJsonString(o.toJson());
-    println(o.getString("name"));
-    println(o.getInt("age"));
+  var db = new Database("localhost", "root", "", "nuggetdb");
+  var conn = db.getConnection();
+  var results = conn.query("SHOW TABLES");
+  for(Result r : results) {
+      println(r.getString(0));
+  }
+
+  var s1 = new Shard("default", conn, "s1_");
+  //println(s1.extractNs(s1.dbId(e)));
+  //println(s1.extractId(s1.dbId(e)));
+  s1.create();
+
+  var e = new Entity();
+  e.id = "piet";
+  e["name"] = "Zef's Hemel";
+  e["age"] = 25;
+
+  s1.put(e);
+  e["age"] = 26;
+  s1.put(e);
 }

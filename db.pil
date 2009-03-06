@@ -1,15 +1,16 @@
 import pil::db
 
 external class pil::db::Database {
-    new(String hostName, String username, String password, String database);
-    pil::db::Connection getConnection();
+  new(String hostName, String username, String password, String database);
+  pil::db::Connection getConnection();
 }
 
 external class pil::db::Connection {
-    List<Result> query(String query);
+  List<Result> query(String query);
+  void updateQuery(String query);
 }
 
 external class pil::db::Result {
-    Int getInt(Int index);
-    String getString(Int index);
+  Int getInt(Int index);
+  String getString(Int index);
 }

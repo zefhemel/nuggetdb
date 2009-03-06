@@ -1,3 +1,7 @@
+import "json.pil"
+import "shard.pil"
+import pil::json
+import nuggetdb::shard
 
 class nuggetdb::IllegalIdException extends Exception {
   new(String message) extends super(message) {
@@ -9,41 +13,60 @@ class nuggetdb::Entity {
   String ns = null;
   DateTime updated = new DateTime();
   Bool isNew = true;
+  Shard shard = null;
 
-  @private Map<String, Object> attributes = new Map<String, Object>();
+  @private JsonObject json = new JsonObject();
 
   new() {
   }
 
-  void set(String attr, Object value) {
-    attributes[attr] = value;
+  String toJson() {
+    return json.toJson();
   }
 
-  Object get(String attr) {
-    return attributes[attr];
+  void validate() {
+    if(id.contains("/")) {
+      throw new nuggetdb::IllegalIdException("The following characters are not allowed in ids: /");
+    }
+  }
+
+  void put(Shard shard) {
+    this.shard = shard;
+    validate();
+    shard.put(this);
+  }
+
+  // Setting properties
+
+  void set(String key, Object value) {
+    json.set(key, value);
+  }
+
+  Object get(String key) {
+    return json.get(key);
   }
 
   void setInt(String attr, Int value) {
-    attributes[attr] = value;
+    json.setInt(attr, value);
   }
 
   Int getInt(String attr) {
-    return (Int)attributes[attr];
+    return json.getInt(attr);
   }
 
   void setString(String attr, String value) {
-    attributes[attr] = value;
+    json.setString(attr, value);
   }
 
   String getString(String attr) {
-    return (attributes[attr]).toString();
+    return json.getString(attr);
   }
 
   void setDateTime(String attr, DateTime value) {
-    attributes[attr] = value;
+    json.setDateTime(attr, value);
   }
 
   DateTime getDateTime(String attr) {
-    return (DateTime)attributes[attr];
+    return json.getDateTime(attr);
   }
 }

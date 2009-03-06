@@ -17,7 +17,7 @@ class Entity(object):
         self.updated = updated
         self.ns = ns
         self._shard = shard
-        self._new = new
+        self._new = hew
 
     def as_dict(self):
         d = {}
