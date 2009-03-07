@@ -1,7 +1,9 @@
 import "json.pil"
 import "shard.pil"
+import "util.pil"
+
 import pil::json
-import nuggetdb::shard
+import nuggetdb
 
 class nuggetdb::IllegalIdException extends Exception {
   new(String message) extends super(message) {
@@ -9,13 +11,13 @@ class nuggetdb::IllegalIdException extends Exception {
 }
 
 class nuggetdb::Entity {
-  String id = null;
+  String id = nuggetdb::util::genUUID();
   String ns = null;
   DateTime updated = new DateTime();
   Bool isNew = true;
   Shard shard = null;
 
-  @private JsonObject json = new JsonObject();
+  JsonObject json = new JsonObject();
 
   new() {
   }
@@ -30,14 +32,15 @@ class nuggetdb::Entity {
     }
   }
 
-  void put(Shard shard) {
-    this.shard = shard;
-    validate();
-    shard.put(this);
+  String dbId() {
+    if(ns == null) {
+      return id;
+    } else {
+      return ns + "/" + id;
+    }
   }
 
   // Setting properties
-
   void set(String key, Object value) {
     json.set(key, value);
   }

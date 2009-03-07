@@ -1,0 +1,32 @@
+import "shard.pil"
+import "index.pil"
+import "entity.pil"
+
+import nuggetdb
+
+class nuggetdb::Store {
+  Map<String, Shard> shards = new Map<String, Shard>();
+  List<Index> indexes = new List<Index>();
+
+  void addShard(Shard s) {
+    shards[s.name] = s;
+  }
+
+  void addIndex(Index i) {
+    indexes.add(i);
+    i.store = this;
+  }
+
+  void persist(Shard shard, Entity e) {
+    e.validate();
+    shard.put(e);
+  }
+
+  Entity get(Shard shard, String ns, String id) {
+    if(ns == null) {
+      return shard.get(id);
+    } else {
+      return shard.get(ns + "/" + id);
+    }
+  }
+}

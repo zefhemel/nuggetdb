@@ -1,29 +1,35 @@
 import "db.pil"
 import "entity.pil"
 import "shard.pil"
+import "index.pil"
+import "store.pil"
+
 import pil::db
 import nuggetdb
-import nuggetdb::shard
 
 void main(Array<String> args) {
   var db = new Database("localhost", "root", "", "nuggetdb");
   var conn = db.getConnection();
-  var results = conn.query("SHOW TABLES");
-  for(Result r : results) {
-      println(r.getString(0));
-  }
-
-  var s1 = new Shard("default", conn, "s1_");
-  //println(s1.extractNs(s1.dbId(e)));
-  //println(s1.extractId(s1.dbId(e)));
-  s1.create();
+  var store = new Store();
+  var shard = new Shard("default", conn, "s1_");
+  store.addShard(shard);
+  store.addIndex(new Index("User", new Array<String>("name"), new Array<String>("VARCHAR(80)"), shard));
 
   var e = new Entity();
-  e.id = "piet";
-  e["name"] = "Zef's Hemel";
+  e.ns = "User";
+  e["name"] = "Zef Hemel";
   e["age"] = 25;
-
-  s1.put(e);
+  store.persist(shard, e);
   e["age"] = 26;
-  s1.put(e);
+  store.persist(shard, e);
+  //store.indexes[0].addEntry(e);
+  
+  var e2 = store.get(shard, "User", e.id);
+  println(e2.toJson());
+  println(e2.updated);
+  println("Indexing now");
+  store.indexes[0].update();
+  for(Entity ent : store.indexes[0].lookup(new Array<Object>("Zef Hemel"))) {
+    println(ent.toJson());
+  }
 }

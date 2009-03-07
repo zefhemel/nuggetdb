@@ -17,6 +17,8 @@ Array<String> nuggetdb::util::subStringArray(Array<String> array, Int startIndex
   return newAr;
 }
 
+external String nuggetdb::util::genUUID();
+
 String nuggetdb::util::sqlEscape(String value) {
   var r = new MutableString();
   for(Int i = 0; i < value.length; i++) {

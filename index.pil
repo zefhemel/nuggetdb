@@ -1,0 +1,115 @@
+import "shard.pil"
+import "entity.pil"
+import "util.pil"
+import "store.pil"
+
+import nuggetdb::util
+import pil::db
+
+class nuggetdb::Index {
+  Shard shard = null;
+  Array<String> columns = null;
+  Array<String> columnTypes = null;
+  String ns = null;
+  Store store = null;
+
+  new(String ns, Array<String> columns, Array<String> columnTypes, Shard shard) {
+    this.ns = ns;
+    this.columns = columns;
+    this.columnTypes = columnTypes;
+    this.shard = shard;
+    create();
+  }
+
+  String tablifyName(String name) {
+    var r = new MutableString();
+    for(Int i = 0; i < name.length; i++) {
+      if((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= 'A' && name[i] <= 'Z') || 
+         (name[i] >= '0' && name[i] <= '9')) {
+        r.append(name[i]);
+      } else {
+        r.append("_");
+      }
+    }
+    return r.toString();
+  }
+
+  String tableName() {
+    if(ns != null) {
+      return tablifyName(shard.tablePrefix + "index_" + ns + "_" + joinStrings("_", columns));
+    } else {
+      return tablifyName(shard.tablePrefix + "index_" + joinStrings("_", columns));
+    }
+  }
+
+  void create() {
+    var conn = shard.conn;
+    var tblName = tableName();
+    for(pil::db::Result r : conn.query("SHOW TABLES;")) {
+      if(r.getString(0) == tblName) {
+        return;
+      }
+    }
+    var sql = "CREATE TABLE " + tblName + " (";
+    sql = sql + "   entity_id VARCHAR(200) NOT NULL UNIQUE,";
+    for(Int i = 0; i < columns.length; i++) {
+      sql = sql + "  `" + columns[i] + "` " + columnTypes[i] + " NOT NULL, ";
+    }
+    sql = sql + "   updated TIMESTAMP DEFAULT NOW(),";
+    sql = sql + "   shard VARCHAR(20) NOT NULL,";
+    sql = sql + "   PRIMARY KEY (entity_id, " + joinStrings(", ", columns) + ")";
+    sql = sql + ") ENGINE=InnoDB;";
+    conn.updateQuery(sql);
+  }
+
+  void addEntry(Entity e) {
+    var conn = shard.conn;
+    var vals = new Array<String>(columns.length);
+    for(Int i = 0; i < columns.length; i++) {
+      vals[i] = "'" + sqlEscape(e.getString(columns[i])) + "'";
+    }
+    var sql = "INSERT INTO " + tableName() + " (entity_id, shard, " + joinStrings(", ", columns) + ") VALUES ('" + sqlEscape(e.dbId()) + "', '" + e.shard.name + "', " + joinStrings(", ", vals) + ");";
+    conn.updateQuery(sql);
+  }
+
+  Bool hasEntry(Entity e) {
+    var conn = shard.conn;
+    var r = conn.query("SELECT entity_id FROM " + tableName() + " WHERE entity_id = '" + sqlEscape(e.dbId()) + "';");
+    return r.length == 1;
+  }
+
+  List<Entity> lookup(Array<Object> values) {
+    var conn = shard.conn;
+    var wheres = new Array<String>(values.length);
+    for(Int i = 0; i < values.length; i++) {
+      wheres[i] = "`" + columns[i] + "` = '" + sqlEscape(values[i].toString()) + "'";
+    }
+    var result = new List<Entity>();
+    for(Result r : conn.query("SELECT entity_id, shard FROM " + tableName() + " WHERE " + joinStrings(" AND ", wheres) + ";")) {
+      result.add(store.shards[r.getString(1)].get(r.getString(0)));
+    }
+    return result;
+  }
+
+  void update() {
+    for(String shardName : store.shards.keys) {
+      var s = store.shards[shardName];
+      var conn = s.conn;
+      List<Result> results = null;
+      if(ns == null) {
+        results = conn.query("SELECT * FROM " + s.tablePrefix + "entity ORDER BY updated DESC;");
+      } else {
+        results = conn.query("SELECT * FROM " + s.tablePrefix + "entity WHERE id LIKE '" + sqlEscape(ns) + "%' ORDER BY updated DESC;");
+      }
+      for(Result r : results) {
+        var e = s.entityFromDbRow(r);
+        println("Indexing: " + e.id + " updated: " + e.updated.toString());
+        if(hasEntry(e)) {
+          println("Quittin'");
+          return;
+        }
+        addEntry(e);
+      }
+    }
+  }
+}

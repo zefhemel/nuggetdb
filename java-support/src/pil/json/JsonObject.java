@@ -10,7 +10,7 @@ import org.json.JSONObject;
 public class JsonObject {
 	HashMap<String, Object> data = new HashMap<String, Object>();
 
-	static public SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	static public SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 	
 	public String getString(String key) {
 		return data.get(key).toString();

@@ -1,12 +1,12 @@
 import "db.pil"
 import "entity.pil"
 import "util.pil"
+import "json.pil"
 
 import nuggetdb
-import nuggetdb::shard
 import nuggetdb::util
 
-class nuggetdb::shard::Shard {
+class nuggetdb::Shard {
   String name = "default";
   String tablePrefix = "default";
   pil::db::Connection conn = null;
@@ -15,14 +15,7 @@ class nuggetdb::shard::Shard {
     this.name = name;
     this.conn = conn;
     this.tablePrefix = tablePrefix;
-  }
-
-  String dbId(Entity entity) {
-    if(entity.ns == null) {
-      return entity.id;
-    } else {
-      return entity.ns + "/" + entity.id;
-    }
+    create();
   }
 
   String extractNs(String dbId) {
@@ -40,16 +33,34 @@ class nuggetdb::shard::Shard {
   }
 
   void put(Entity e) {
+    e.shard = this;
     if(e.isNew) {
-      var sql = "INSERT INTO " + tablePrefix + "entity VALUES ('" + sqlEscape(e.id) + "', NOW(), '" + sqlEscape(e.toJson()) + "');";
-      println(sql);
+      var sql = "INSERT INTO " + tablePrefix + "entity VALUES ('" + sqlEscape(e.dbId()) + "', NOW(), '" + sqlEscape(e.toJson()) + "');";
       conn.updateQuery(sql);
       e.isNew = false;
     } else {
-      var sql = "UPDATE " + tablePrefix + "entity SET updated = NOW(), content = '" + sqlEscape(e.toJson()) + "' WHERE id = '" + sqlEscape(e.id) + "';";
-      println(sql);
+      var sql = "UPDATE " + tablePrefix + "entity SET updated = NOW(), content = '" + sqlEscape(e.toJson()) + "' WHERE id = '" + sqlEscape(e.dbId()) + "';";
       conn.updateQuery(sql);
     }
+  }
+
+  Entity get(String dbId) {
+    var sql = "SELECT * FROM " + tablePrefix + "entity WHERE id = '" + sqlEscape(dbId) + "' LIMIT 1;";
+    var results = conn.query(sql);
+    if(results.length == 1) {
+      return entityFromDbRow(results[0]);
+    } else {
+      return null;
+    }
+  }
+
+  Entity entityFromDbRow(pil::db::Result r) {
+    var e = new Entity();
+    e.id = r.getString(0);
+    e.updated = r.getDateTime(1);
+    e.json = pil::json::fromJsonString(r.getString(2));
+    e.shard = this;
+    return e;
   }
 
   void create() {

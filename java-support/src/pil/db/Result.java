@@ -2,7 +2,11 @@ package pil.db;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
+
+import pil.json.JsonObject;
 
 public class Result {
 	ArrayList<String> values = new ArrayList<String>();
@@ -24,6 +28,14 @@ public class Result {
 
 	public String getString(int index) {
 		return values.get(index);
+	}
+	
+	public Date getDateTime(int index) {
+		try {
+			return JsonObject.dateFormat.parse(values.get(index));
+		} catch (ParseException e) {
+			return null;
+		}
 	}
 	
 	public String toString() {

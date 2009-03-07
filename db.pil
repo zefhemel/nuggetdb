@@ -13,4 +13,5 @@ external class pil::db::Connection {
 external class pil::db::Result {
   Int getInt(Int index);
   String getString(Int index);
+  DateTime getDateTime(Int index);
 }
