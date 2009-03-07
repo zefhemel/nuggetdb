@@ -1,7 +1,7 @@
-import "db.pil"
-import "entity.pil"
-import "util.pil"
-import "json.pil"
+import "nuggetdb/db.pil"
+import "nuggetdb/entity.pil"
+import "nuggetdb/util.pil"
+import "nuggetdb/json.pil"
 
 import nuggetdb
 import nuggetdb::util

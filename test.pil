@@ -1,8 +1,8 @@
-import "db.pil"
-import "entity.pil"
-import "shard.pil"
-import "index.pil"
-import "store.pil"
+import "nuggetdb/db.pil"
+import "nuggetdb/entity.pil"
+import "nuggetdb/shard.pil"
+import "nuggetdb/index.pil"
+import "nuggetdb/store.pil"
 
 import pil::db
 import nuggetdb

@@ -1,6 +1,6 @@
-import "json.pil"
-import "shard.pil"
-import "util.pil"
+import "nuggetdb/json.pil"
+import "nuggetdb/shard.pil"
+import "nuggetdb/util.pil"
 
 import pil::json
 import nuggetdb

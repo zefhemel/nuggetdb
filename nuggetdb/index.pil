@@ -1,7 +1,7 @@
-import "shard.pil"
-import "entity.pil"
-import "util.pil"
-import "store.pil"
+import "nuggetdb/shard.pil"
+import "nuggetdb/entity.pil"
+import "nuggetdb/util.pil"
+import "nuggetdb/store.pil"
 
 import nuggetdb::util
 import pil::db
