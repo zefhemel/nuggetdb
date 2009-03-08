@@ -1,6 +1,7 @@
 import "nuggetdb/shard.pil"
 import "nuggetdb/index.pil"
 import "nuggetdb/entity.pil"
+import "nuggetdb/query.pil"
 
 import nuggetdb
 
@@ -20,6 +21,16 @@ class nuggetdb::Store {
   void persist(Shard shard, Entity e) {
     e.validate();
     shard.put(e);
+  }
+
+  void updateIndexes() {
+    for(Index idx : indexes) {
+      idx.update();
+    }
+  }
+
+  Query all() {
+    return new Query();
   }
 
   Entity get(Shard shard, String ns, String id) {

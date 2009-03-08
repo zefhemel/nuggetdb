@@ -3,6 +3,7 @@ import "nuggetdb/entity.pil"
 import "nuggetdb/shard.pil"
 import "nuggetdb/index.pil"
 import "nuggetdb/store.pil"
+import "nuggetdb/query.pil"
 
 import pil::db
 import nuggetdb
@@ -14,6 +15,7 @@ void main(Array<String> args) {
   var shard = new Shard("default", conn, "s1_");
   store.addShard(shard);
   store.addIndex(new Index("User", new Array<String>("name"), new Array<String>("VARCHAR(80)"), shard));
+  store.addIndex(new Index("User", new Array<String>("age"), new Array<String>("INT"), shard));
 
   var e = new Entity();
   e.ns = "User";
@@ -22,14 +24,15 @@ void main(Array<String> args) {
   store.persist(shard, e);
   e["age"] = 26;
   store.persist(shard, e);
+  store.updateIndexes();
   //store.indexes[0].addEntry(e);
   
   var e2 = store.get(shard, "User", e.id);
   println(e2.toJson());
   println(e2.updated);
   println("Indexing now");
-  store.indexes[0].update();
-  for(Entity ent : store.indexes[0].lookup(new Array<Object>("Zef Hemel"))) {
+  println(store.all().filter("name", "=", "Zef").orderBy("name", false).toSql());
+  for(Entity ent : store.indexes[1].lookup(new Array<Object>("26"))) {
     println(ent.toJson());
   }
 }
