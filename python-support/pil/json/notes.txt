@@ -1,0 +1,1 @@
+datetime.datetime.strptime(datetime.datetime.now().isoformat(' ').split('.')[0], '%Y-%m-%d %H:%M:%S')

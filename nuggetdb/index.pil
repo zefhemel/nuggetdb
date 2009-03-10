@@ -57,7 +57,7 @@ class nuggetdb::Index {
     }
     sql = sql + "   updated TIMESTAMP DEFAULT NOW(),";
     sql = sql + "   shard VARCHAR(20) NOT NULL,";
-    sql = sql + "   PRIMARY KEY (entity_id, " + joinStrings(", ", columns) + ")";
+    sql = sql + "   PRIMARY KEY (" + joinStrings(", ", columns) + ", entity_id)";
     sql = sql + ") ENGINE=InnoDB;";
     conn.updateQuery(sql);
   }

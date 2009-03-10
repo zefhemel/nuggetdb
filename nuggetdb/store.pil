@@ -30,7 +30,7 @@ class nuggetdb::Store {
   }
 
   Query all() {
-    return new Query();
+    return new Query(this);
   }
 
   Entity get(Shard shard, String ns, String id) {
